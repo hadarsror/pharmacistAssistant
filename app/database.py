@@ -1,18 +1,27 @@
-"""
-Synthetic Database for Pharmacist Assistant.
-10 Users and 5 Medications included.
-"""
-
 USERS_DB = {
     "312456789": {
         "id": "312456789",
         "name": "Hadar",
-        "allergies": ["Penicillin"],
+        "allergies": ["Penicillin"],  # TEST: Class Conflict
         "prescriptions": [
             {"name": "Amoxicillin", "instructions": "Take 1 capsule every 8 hours for 10 days."},
             {"name": "Lisinopril", "instructions": "Take 10mg once daily in the morning."}
         ],
         "history": "History of hypertension."
+    },
+    "058123456": {
+        "id": "058123456",
+        "name": "Bob Levy",
+        "allergies": ["Ibuprofen"], # TEST: Direct Ingredient Conflict
+        "prescriptions": [{"name": "Ibuprofen", "instructions": "Take 400mg twice daily."}],
+        "history": "Chronic headaches."
+    },
+    "123123123": {
+        "id": "123123123",
+        "name": "Maya Avni",
+        "allergies": ["Methylphenidate"], # TEST: Active Ingredient Conflict
+        "prescriptions": [{"name": "Ritalin", "instructions": "Take 20mg once daily in the morning."}],
+        "history": "ADHD."
     },
     "204567891": {
         "id": "204567891",
@@ -21,61 +30,12 @@ USERS_DB = {
         "prescriptions": [{"name": "Metformin", "instructions": "Take 850mg twice daily with meals."}],
         "history": "Type 2 Diabetes."
     },
-    "058123456": {
-        "id": "058123456",
-        "name": "Bob Levy",
-        "allergies": ["NSAIDs"],
-        "prescriptions": [{"name": "Lisinopril", "instructions": "Take 20mg once daily."}],
-        "history": "Hypertension."
-    },
     "300987654": {
         "id": "300987654",
         "name": "Dana Silver",
         "allergies": [],
         "prescriptions": [],
         "history": "No known issues."
-    },
-    "201234567": {
-        "id": "201234567",
-        "name": "Yossi Mizrahi",
-        "allergies": [],
-        "prescriptions": [{"name": "Ritalin", "instructions": "Take 10mg twice daily, 30 mins before meals."}],
-        "history": "ADHD management."
-    },
-    "012345678": {
-        "id": "012345678",
-        "name": "Sarah Goldberg",
-        "allergies": [],
-        "prescriptions": [{"name": "Amoxicillin", "instructions": "Take 500mg every 12 hours for 7 days."}],
-        "history": "Recent dental surgery."
-    },
-    "111222333": {
-        "id": "111222333",
-        "name": "Michael Levi",
-        "allergies": [],
-        "prescriptions": [{"name": "Metformin", "instructions": "Take 500mg once daily."}],
-        "history": "Prediabetic."
-    },
-    "444555666": {
-        "id": "444555666",
-        "name": "Noa Biton",
-        "allergies": [],
-        "prescriptions": [{"name": "Ibuprofen", "instructions": "Take 200mg as needed for headaches."}],
-        "history": "Seasonal allergies."
-    },
-    "777888999": {
-        "id": "777888999",
-        "name": "David Cohen",
-        "allergies": ["Penicillin"],
-        "prescriptions": [],
-        "history": "History of asthma."
-    },
-    "123123123": {
-        "id": "123123123",
-        "name": "Maya Avni",
-        "allergies": [],
-        "prescriptions": [{"name": "Ritalin", "instructions": "Take 20mg once daily in the morning."}],
-        "history": "No known allergies."
     }
 }
 

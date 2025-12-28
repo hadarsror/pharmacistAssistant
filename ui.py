@@ -10,22 +10,21 @@ st.caption("Enterprise-grade Agentic Pharmacist - Hadar's Home Assignment")
 
 # Sidebar: Dynamically pull all IDs from the database
 user_ids = ["Select an ID..."] + list(USERS_DB.keys())
-user_id = st.sidebar.selectbox("Select User ID", user_ids)
+user_id_selection = st.sidebar.selectbox("Select User ID", user_ids, index=0)
 
-if user_id == "Select an ID...":
+if user_id_selection == "Select an ID...":
     # Pass no session_id to the backend or a placeholder
     session_id = "default"
 else:
-    session_id = user_id
-
+    session_id = user_id_selection
 
 # Clear chat if the user ID changes
 if "last_user_id" not in st.session_state:
-    st.session_state.last_user_id = user_id
+    st.session_state.last_user_id = session_id
 
-if st.session_state.last_user_id != user_id:
+if st.session_state.last_user_id != session_id:
     st.session_state.messages = []
-    st.session_state.last_user_id = user_id
+    st.session_state.last_user_id = session_id
     st.rerun()
 # Initialize chat history
 if "messages" not in st.session_state:
