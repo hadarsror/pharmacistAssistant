@@ -58,6 +58,15 @@ MEDICATIONS_DB = {
         "stock_level": 200,
         "restrictions": "Avoid taking on an empty stomach. Do not exceed 1200mg/day."
     },
+    "Advil": {
+        "sku": "MED-ADV-200",
+        "name": "Advil",
+        "drug_class": "NSAIDs",
+        "active_ingredients": "Ibuprofen", # <--- Match 2 (The tool will find this!)
+        "requires_rx": False,
+        "stock_level": 50,
+        "restrictions": "Avoid taking on an empty stomach. Do not exceed 1200mg/day."
+    },
     "Ritalin": {
         "sku": "MED-RIT-10",
         "name": "Ritalin",
