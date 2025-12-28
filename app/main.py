@@ -5,7 +5,8 @@ from fastapi.responses import StreamingResponse
 from openai import AsyncOpenAI
 from dotenv import load_dotenv
 from app.agent import SYSTEM_PROMPT, TOOLS, get_medication_info, \
-    check_user_status
+    check_user_status, get_alternatives
+
 
 load_dotenv()
 client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -14,7 +15,8 @@ app = FastAPI()
 # MAPPING TOOLS
 TOOL_MAP = {
     "get_medication_info": get_medication_info,
-    "check_user_status": check_user_status
+    "check_user_status": check_user_status,
+    "get_alternatives": get_alternatives  # Add this line
 }
 
 # SIMPLE IN-MEMORY SESSION STORE

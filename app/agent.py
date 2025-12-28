@@ -3,6 +3,9 @@ from app.database import USERS_DB, MEDICATIONS_DB
 SYSTEM_PROMPT = """
 You are a professional, concise AI Pharmacist Assistant. Your responses must be structured and factual.
 
+LANGUAGE POLICY:
+- Always respond in the same language the user uses (Hebrew or English).
+
 MANDATORY RESPONSE STRUCTURE:
 When a user asks about a medication, your response MUST include:
 1. ACTIVE INGREDIENTS: List the active ingredients.
@@ -12,10 +15,11 @@ When a user asks about a medication, your response MUST include:
 5. SAFETY WARNINGS: Report any allergy conflicts based on drug class and mention medication-specific restrictions (e.g., "Take with food").
 
 POLICIES:
-- NO MEDICAL ADVICE: Never suggest a treatment or diagnose. If asked for advice, respond: "I cannot provide medical advice. Please consult a healthcare professional."
-- IDENTITY: If a CURRENT_USER_ID is provided by the system context, proceed silently without asking for it. If not, you MUST ask for the 9-digit Patient ID before calling tools.
-- BREVITY: Use bullet points for the structure above. Do not use conversational filler like "I'd be happy to help."
-- DATA SOURCE: Use ONLY information provided by the tools. If a medication is missing from the database, state that you don't have information on it.
+- NO MEDICAL ADVICE: Never suggest a treatment, diagnose, or say "it is safe for you." If asked for advice or safety confirmation, you MUST respond: "I am an AI assistant and cannot provide medical advice. Please consult with our pharmacist or your healthcare professional."
+- IDENTITY: If a CURRENT_USER_ID is provided by the system context, proceed silently. If not, you MUST ask for the 9-digit Patient ID before calling tools that require user data.
+- BREVITY: Use bullet points. Do not use conversational filler.
+- DATA SOURCE: Use ONLY information provided by tools. If a medication is missing, state that you don't have information on it.
+- ALTERNATIVES: If a medication is out of stock, use the 'get_alternatives' tool to find options with the same active ingredient, but remind the user they need a new prescription for any alternative.
 """
 
 def get_medication_info(name: str):
@@ -58,14 +62,23 @@ def check_user_status(user_id: str, med_name: str):
         "active_ingredients": med.get("active_ingredients", "Unknown")
     }
 
-def get_alternatives(active_ingredient: str):
+
+def get_alternatives(active_ingredient: str, current_med_name: str = ""):
     """
-    Finds medications with the same active ingredient.
-    Fulfills the 3rd tool requirement for inventory/alternative flows.
+    Finds medications with the same active ingredient, excluding the current one.
     """
-    alternatives = [m["name"] for m in MEDICATIONS_DB.values()
-                    if active_ingredient.lower() in m["active_ingredients"].lower()]
-    return {"alternatives": alternatives} if alternatives else {"error": "No alternatives found with that active ingredient."}
+    ingredient_lower = active_ingredient.lower()
+    alternatives = [
+        m["name"] for m in MEDICATIONS_DB.values()
+        if ingredient_lower in m["active_ingredients"].lower()
+           and m["name"].lower() != current_med_name.lower()
+    ]
+
+    if alternatives:
+        return {"alternatives": alternatives}
+    return {
+        "error": f"No alternatives found with active ingredient: {active_ingredient}"}
+
 
 TOOLS = [
     {
