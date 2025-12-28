@@ -1,52 +1,32 @@
 from app.database import USERS_DB, MEDICATIONS_DB
 
 SYSTEM_PROMPT = """
-You are an AI Pharmacist Assistant for a retail pharmacy chain.
-Your goal is to assist customers with medication facts, stock checks, and prescription status.
+You are a professional, concise AI Pharmacist Assistant. Your responses must be structured and factual.
 
-CRITICAL POLICIES:
-1. NO MEDICAL ADVICE: Never diagnose or recommend a treatment. If asked "what should I take for X?", respond: "I cannot provide medical advice or diagnoses. Please consult a healthcare professional."
-2. FACTUAL ONLY: Use the provided tools for every data point. If a medication is not in the database, say you don't have information on it.
-3. ALLERGY SAFETY: Before confirming interest in a medication, check the user's 'history' for allergies. If a conflict exists (e.g., Penicillin allergy and Amoxicillin), warn the user immediately.
-4. PRESCRIPTION CHECK: If a medication 'requires_rx' is True, you must verify the user has it in their 'prescriptions' list before confirming availability for them.
-5. TONE: Professional, efficient, and helpful.
-6. LANGUAGE: Respond in the language used by the user (Hebrew or English).
+MANDATORY RESPONSE STRUCTURE:
+When a user asks about a medication, your response MUST include:
+1. ACTIVE INGREDIENTS: List the active ingredients.
+2. STOCK STATUS: State if it is currently in stock.
+3. PRESCRIPTION STATUS: State if the user has a valid prescription on file.
+4. DOSAGE & USAGE: Provide the patient-specific usage instructions from the user's prescription record.
+5. SAFETY WARNINGS: Report any allergy conflicts based on drug class and mention medication-specific restrictions (e.g., "Take with food").
 
-MULTI-STEP FLOW LOGIC:
-- If a user wants to buy/refill: Check User -> Check Med Info -> Check Stock -> Check Allergy Conflict -> Final Answer.
-"""
-
-SYSTEM_PROMPT = """
-You are an AI Pharmacist Assistant for a retail pharmacy chain.
-Your goal is to assist customers with medication facts, stock checks, and prescription status.
-
-IDENTITY VERIFICATION POLICY:
-- Every conversation MUST start by identifying the patient.
-- If the user asks for medication info, stock, or refills but has NOT provided their 9-digit Patient ID, you MUST politely ask for it first.
-- Example: "I'd be happy to help. May I please have your 9-digit Patient ID to access your records?"
-- Do NOT call 'check_user_status' until you have the ID.
-
-CRITICAL POLICIES:
-1. NO MEDICAL ADVICE: Never diagnose or recommend a treatment. 
-2. FACTUAL ONLY: Use the provided tools for every data point.
-3. ALLERGY SAFETY: Before confirming interest in a medication, use the tool to check 'history'.
-4. PRESCRIPTION CHECK: Verify 'requires_rx' status before confirming availability.
-5. TONE: Professional, efficient, and helpful.
-6. LANGUAGE: Respond in the language used by the user (Hebrew or English).
-
-MULTI-STEP FLOW LOGIC:
-1. Greet User -> 2. Request/Verify Patient ID -> 3. Call check_user_status -> 4. Check Allergy/Stock/RX -> 5. Final Answer.
+POLICIES:
+- NO MEDICAL ADVICE: Never suggest a treatment or diagnose. If asked for advice, respond: "I cannot provide medical advice. Please consult a healthcare professional."
+- IDENTITY: If a CURRENT_USER_ID is provided by the system context, proceed silently without asking for it. If not, you MUST ask for the 9-digit Patient ID before calling tools.
+- BREVITY: Use bullet points for the structure above. Do not use conversational filler like "I'd be happy to help."
+- DATA SOURCE: Use ONLY information provided by the tools. If a medication is missing from the database, state that you don't have information on it.
 """
 
 def get_medication_info(name: str):
-    """Fetches factual data about a medication (ingredients, usage)."""
+    """Fetches factual data about a medication (ingredients, restrictions)."""
     med = MEDICATIONS_DB.get(name.strip().capitalize())
     return med if med else {"error": "Medication not found."}
 
 def check_user_status(user_id: str, med_name: str):
     """
-    Executes a multi-step verification flow.
-    Requires a valid 9-digit user_id.
+    Robustly checks for prescriptions, stock, and allergy conflicts.
+    Logic is data-driven: compares med['drug_class'] to user['allergies'].
     """
     u_id = user_id.strip()
     m_name = med_name.strip().capitalize()
@@ -55,36 +35,48 @@ def check_user_status(user_id: str, med_name: str):
     med = MEDICATIONS_DB.get(m_name)
 
     if not user:
-        return {"error": f"Patient ID {u_id} not found in our records. Please verify the ID."}
+        return {"error": f"Patient ID {u_id} not found."}
     if not med:
         return {"error": f"Medication '{m_name}' not found."}
 
-    # Allergy Check
-    allergy_warning = None
-    if "Penicillin" in user["history"] and "Amoxicillin" in med["active_ingredients"]:
-        allergy_warning = f"SAFETY ALERT: Patient history shows {user['history']}. Amoxicillin is a Penicillin-class drug."
+    # Data-driven Allergy Check
+    allergy_conflict = None
+    if med.get("drug_class") in user.get("allergies", []):
+        allergy_conflict = f"SAFETY ALERT: Patient history shows an allergy to {med['drug_class']}."
+
+    # Patient-specific usage from the User's prescription record
+    rx_entry = next((rx for rx in user.get("prescriptions", []) if rx["name"] == m_name), None)
 
     return {
         "user_name": user["name"],
         "medication": m_name,
-        "authorized_by_rx": not med["requires_rx"] or m_name in user["prescriptions"],
-        "allergy_conflict": allergy_warning,
-        "stock_available": med["stock_level"],
-        "usage_instructions": med["usage"]
+        "authorized_by_rx": not med.get("requires_rx", True) or rx_entry is not None,
+        "patient_usage_instructions": rx_entry["instructions"] if rx_entry else "No specific prescription found in your records.",
+        "medication_restrictions": med.get("restrictions", "None listed."),
+        "allergy_conflict": allergy_conflict,
+        "stock_available": med.get("stock_level", 0),
+        "active_ingredients": med.get("active_ingredients", "Unknown")
     }
 
-# Update TOOLS schema to reflect the new check_user_status function
+def get_alternatives(active_ingredient: str):
+    """
+    Finds medications with the same active ingredient.
+    Fulfills the 3rd tool requirement for inventory/alternative flows.
+    """
+    alternatives = [m["name"] for m in MEDICATIONS_DB.values()
+                    if active_ingredient.lower() in m["active_ingredients"].lower()]
+    return {"alternatives": alternatives} if alternatives else {"error": "No alternatives found with that active ingredient."}
+
 TOOLS = [
     {
         "type": "function",
         "function": {
             "name": "get_medication_info",
-            "description": "Get factual info, ingredients, and usage for a medication.",
+            "description": "Get factual info, ingredients, and general restrictions for a medication.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "name": {"type": "string",
-                             "description": "The name of the medication, e.g., 'Ibuprofen'"}
+                    "name": {"type": "string", "description": "The medication name, e.g., 'Amoxicillin'"}
                 },
                 "required": ["name"]
             }
@@ -94,16 +86,28 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "check_user_status",
-            "description": "Checks if the user has a prescription, enough stock, and no allergy conflicts.",
+            "description": "Checks user's prescription status, stock, and robustly verifies allergy conflicts.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "user_id": {"type": "string",
-                                "description": "The ID of the user, e.g., 'U1'"},
-                    "med_name": {"type": "string",
-                                 "description": "The medication they are asking about."}
+                    "user_id": {"type": "string", "description": "The 9-digit patient ID."},
+                    "med_name": {"type": "string", "description": "The name of the medication."}
                 },
                 "required": ["user_id", "med_name"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_alternatives",
+            "description": "Search for medications containing the same active ingredient.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "active_ingredient": {"type": "string", "description": "The chemical ingredient to search for."}
+                },
+                "required": ["active_ingredient"]
             }
         }
     }

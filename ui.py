@@ -1,15 +1,26 @@
 import streamlit as st
 import requests
 import json
+from app.database import USERS_DB
 
 st.set_page_config(page_title="Wonderful Pharmacy Assistant", page_icon="💊")
 
 st.title("💊 Pharmacy AI Assistant")
 st.caption("Enterprise-grade Agentic Pharmacist - Hadar's Home Assignment")
 
-# Sidebar for user selection to simulate "Logged in" state
-user_id = st.sidebar.selectbox("Select User ID", ["312456789", "204567891", "300987654", "201234567"])
+# Sidebar: Dynamically pull all IDs from the database
+user_ids = list(USERS_DB.keys())
+user_id = st.sidebar.selectbox("Select User ID", user_ids)
 
+
+# Clear chat if the user ID changes
+if "last_user_id" not in st.session_state:
+    st.session_state.last_user_id = user_id
+
+if st.session_state.last_user_id != user_id:
+    st.session_state.messages = []
+    st.session_state.last_user_id = user_id
+    st.rerun()
 # Initialize chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -42,9 +53,9 @@ if prompt := st.chat_input("How can I help you with your medication?"):
 
                         # Handle Tool Call visualization (Requirement #4)
                         if "tool" in data:
-                            with st.status(f"Running Tool: {data['tool']}...",
+                            with st.status("Verifying pharmacy records...",
                                            expanded=False):
-                                st.write(f"Arguments: {data['args']}")
+                                st.write(f"Querying: {data['tool']}")
 
                         # Handle Text Content
                         if "content" in data:
