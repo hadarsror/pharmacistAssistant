@@ -2,7 +2,7 @@ USERS_DB = {
     "312456789": {
         "id": "312456789",
         "name": "Hadar",
-        "allergies": ["Penicillin"],  # TEST: Class Conflict
+        "allergies": ["Penicillin"],
         "prescriptions": [
             {"name": "Amoxicillin", "instructions": "Take 1 capsule every 8 hours for 10 days."},
             {"name": "Lisinopril", "instructions": "Take 10mg once daily in the morning."}
@@ -12,14 +12,14 @@ USERS_DB = {
     "058123456": {
         "id": "058123456",
         "name": "Bob Levy",
-        "allergies": ["Ibuprofen"], # TEST: Direct Ingredient Conflict
+        "allergies": ["Ibuprofen"],
         "prescriptions": [{"name": "Ibuprofen", "instructions": "Take 400mg twice daily."}],
         "history": "Chronic headaches."
     },
     "123123123": {
         "id": "123123123",
         "name": "Maya Avni",
-        "allergies": ["Methylphenidate"], # TEST: Active Ingredient Conflict
+        "allergies": ["Methylphenidate"],
         "prescriptions": [{"name": "Ritalin", "instructions": "Take 20mg once daily in the morning."}],
         "history": "ADHD."
     },
@@ -36,6 +36,50 @@ USERS_DB = {
         "allergies": [],
         "prescriptions": [],
         "history": "No known issues."
+    },
+    # --- NEW USERS ADDED TO MEET ASSIGNMENT REQUIREMENTS ---
+    "111222333": {
+        "id": "111222333",
+        "name": "Levi Ackermann",
+        "allergies": [],
+        "prescriptions": [
+            {"name": "Amoxicillin", "instructions": "Take 1 capsule twice daily for 7 days."}
+        ],
+        "history": "Occasional ear infections."
+    },
+    "444555666": {
+        "id": "444555666",
+        "name": "Mikasa Arlert",
+        "allergies": ["Penicillin"],
+        "prescriptions": [
+            {"name": "Lisinopril", "instructions": "Take 5mg once daily."}
+        ],
+        "history": "Mild hypertension."
+    },
+    "777888999": {
+        "id": "777888999",
+        "name": "Eren Yeager",
+        "allergies": [],
+        "prescriptions": [
+            {"name": "Metformin", "instructions": "Take 500mg daily."}
+        ],
+        "history": "Pre-diabetic monitoring."
+    },
+    "121212121": {
+        "id": "121212121",
+        "name": "Armin Arlert",
+        "allergies": ["Ibuprofen"],
+        "prescriptions": [
+            {"name": "Ritalin", "instructions": "Take 10mg as needed for focus."}
+        ],
+        "history": "ADHD; history of stomach ulcers."
+    },
+    "989898989": {
+        "id": "989898989",
+        "name": "Jean Kirschtein",
+        "allergies": [],
+        "prescriptions": [],
+        "history": "No significant medical history."
     }
 }
 
@@ -62,7 +106,7 @@ MEDICATIONS_DB = {
         "sku": "MED-ADV-200",
         "name": "Advil",
         "drug_class": "NSAIDs",
-        "active_ingredients": "Ibuprofen", # <--- Match 2 (The tool will find this!)
+        "active_ingredients": "Ibuprofen",
         "requires_rx": False,
         "stock_level": 50,
         "restrictions": "Avoid taking on an empty stomach. Do not exceed 1200mg/day."
