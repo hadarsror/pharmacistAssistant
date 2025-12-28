@@ -27,7 +27,7 @@ chat_sessions = {}
 
 async def agent_loop(messages):
     response = await client.chat.completions.create(
-        model="gpt-5",
+        model="gpt-5-mini",
         messages=messages,
         tools=TOOLS,
         stream=True

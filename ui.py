@@ -1,24 +1,33 @@
 import streamlit as st
 import requests
 import json
+import re
 from app.database import USERS_DB
 
 st.set_page_config(page_title="Wonderful Pharmacy Assistant", page_icon="💊")
 
 st.title("💊 Pharmacy AI Assistant")
-st.caption("Enterprise-grade Agentic Pharmacist - Hadar's Home Assignment")
+st.caption("Enterprise-grade Agentic Pharmacist")
 
-# Sidebar: Dynamically pull all IDs from the database
+
+# --- HELPER: Python-based Direction Detection ---
+def get_direction(text):
+    """Returns 'rtl' if the text contains Hebrew characters, otherwise 'ltr'."""
+    if text and re.search(r'[\u0590-\u05FF]', text):
+        return "rtl"
+    return "ltr"
+
+
+def get_alignment(direction):
+    return "right" if direction == "rtl" else "left"
+
+
+# --- SIDEBAR & SESSION ---
 user_ids = ["Select an ID..."] + list(USERS_DB.keys())
 user_id_selection = st.sidebar.selectbox("Select User ID", user_ids, index=0)
 
-if user_id_selection == "Select an ID...":
-    # Pass no session_id to the backend or a placeholder
-    session_id = "default"
-else:
-    session_id = user_id_selection
+session_id = "default" if user_id_selection == "Select an ID..." else user_id_selection
 
-# Clear chat if the user ID changes
 if "last_user_id" not in st.session_state:
     st.session_state.last_user_id = session_id
 
@@ -26,47 +35,76 @@ if st.session_state.last_user_id != session_id:
     st.session_state.messages = []
     st.session_state.last_user_id = session_id
     st.rerun()
-# Initialize chat history
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Display chat history
+# --- DISPLAY HISTORY ---
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        # Calculate direction for THIS specific message
+        msg_dir = get_direction(message["content"])
+        msg_align = get_alignment(msg_dir)
 
-# User input
+        st.markdown(
+            f'<div style="direction: {msg_dir}; text-align: {msg_align};">{message["content"]}</div>',
+            unsafe_allow_html=True
+        )
+
+# --- MAIN CHAT LOGIC ---
 if prompt := st.chat_input("How can I help you with your medication?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
-        st.markdown(prompt)
+        # Detect direction for user input
+        user_dir = get_direction(prompt)
+        st.markdown(
+            f'<div style="direction: {user_dir}; text-align: {get_alignment(user_dir)};">{prompt}</div>',
+            unsafe_allow_html=True
+        )
 
     with st.chat_message("assistant"):
         response_placeholder = st.empty()
         full_response = ""
 
-        # Call the FastAPI backend
-        # Note: Ensure FastAPI is running on port 8000
+        # Status box (created once)
+        status_container = st.status("Processing request...", expanded=True)
+
         url = f"http://localhost:8000/chat?user_input={prompt}&session_id={session_id}"
 
-        with requests.post(url, stream=True) as r:
-            for line in r.iter_lines():
-                if line:
-                    decoded_line = line.decode('utf-8')
-                    if decoded_line.startswith("data: "):
-                        data = json.loads(decoded_line[6:])
+        try:
+            with requests.post(url, stream=True) as r:
+                for line in r.iter_lines():
+                    if line:
+                        decoded_line = line.decode('utf-8')
+                        if decoded_line.startswith("data: "):
+                            data = json.loads(decoded_line[6:])
 
-                        # Handle Tool Call visualization (Requirement #4)
-                        if "tool" in data:
-                            with st.status("Verifying pharmacy records...",
-                                           expanded=False):
-                                st.write(f"Querying: {data['tool']}")
+                            if "tool" in data:
+                                status_container.write(
+                                    f"Using tool: {data['tool']}")
 
-                        # Handle Text Content
-                        if "content" in data:
-                            full_response += data["content"]
-                            response_placeholder.markdown(full_response + "▌")
+                            if "content" in data:
+                                status_container.update(
+                                    label="Response generated",
+                                    state="complete", expanded=False)
+                                full_response += data["content"]
 
-        response_placeholder.markdown(full_response)
-        st.session_state.messages.append(
-            {"role": "assistant", "content": full_response})
+                                # Real-time direction detection for streaming text
+                                curr_dir = get_direction(full_response)
+                                response_placeholder.markdown(
+                                    f'<div style="direction: {curr_dir}; text-align: {get_alignment(curr_dir)};">{full_response}▌</div>',
+                                    unsafe_allow_html=True
+                                )
+
+            # Final render
+            final_dir = get_direction(full_response)
+            response_placeholder.markdown(
+                f'<div style="direction: {final_dir}; text-align: {get_alignment(final_dir)};">{full_response}</div>',
+                unsafe_allow_html=True
+            )
+            st.session_state.messages.append(
+                {"role": "assistant", "content": full_response})
+
+        except Exception as e:
+            status_container.update(label="Connection Error", state="error")
+            st.error(f"Error connecting to backend: {e}")

@@ -37,7 +37,6 @@ USERS_DB = {
         "prescriptions": [],
         "history": "No known issues."
     },
-    # --- NEW USERS ADDED TO MEET ASSIGNMENT REQUIREMENTS ---
     "111222333": {
         "id": "111222333",
         "name": "Levi Ackermann",
