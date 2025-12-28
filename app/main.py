@@ -84,10 +84,12 @@ async def agent_loop(messages):
 
 @app.post("/chat")
 async def chat(user_input: str, session_id: str = "default"):
-    # Initialize session if not exists
     if session_id not in chat_sessions:
-        # Add the ID to the system instructions so the agent knows who it's talking to
-        auth_context = f"\n\nCURRENT_USER_ID: {session_id}"
+        # Only inject the ID if it's not the default placeholder
+        auth_context = ""
+        if session_id != "default":
+            auth_context = f"\n\nCURRENT_USER_ID: {session_id}"
+
         chat_sessions[session_id] = [
             {"role": "system", "content": SYSTEM_PROMPT + auth_context}
         ]

@@ -9,8 +9,14 @@ st.title("💊 Pharmacy AI Assistant")
 st.caption("Enterprise-grade Agentic Pharmacist - Hadar's Home Assignment")
 
 # Sidebar: Dynamically pull all IDs from the database
-user_ids = list(USERS_DB.keys())
+user_ids = ["Select an ID..."] + list(USERS_DB.keys())
 user_id = st.sidebar.selectbox("Select User ID", user_ids)
+
+if user_id == "Select an ID...":
+    # Pass no session_id to the backend or a placeholder
+    session_id = "default"
+else:
+    session_id = user_id
 
 
 # Clear chat if the user ID changes
@@ -42,7 +48,7 @@ if prompt := st.chat_input("How can I help you with your medication?"):
 
         # Call the FastAPI backend
         # Note: Ensure FastAPI is running on port 8000
-        url = f"http://localhost:8000/chat?user_input={prompt}&session_id={user_id}"
+        url = f"http://localhost:8000/chat?user_input={prompt}&session_id={session_id}"
 
         with requests.post(url, stream=True) as r:
             for line in r.iter_lines():

@@ -5,6 +5,8 @@ You are a professional, concise AI Pharmacist Assistant. Your responses must be 
 
 LANGUAGE POLICY:
 - Always respond in the same language the user uses (Hebrew or English).
+- Keep Hebrew responses as concise as English ones.
+- Answer the user's specific question first (e.g., the dose) before listing ingredients or stock.
 
 MANDATORY RESPONSE STRUCTURE:
 When a user asks about a medication, your response MUST include:
@@ -16,11 +18,14 @@ When a user asks about a medication, your response MUST include:
 
 POLICIES:
 - NO MEDICAL ADVICE: Never suggest a treatment, diagnose, or say "it is safe for you." If asked for advice or safety confirmation, you MUST respond: "I am an AI assistant and cannot provide medical advice. Please consult with our pharmacist or your healthcare professional."
-- IDENTITY: If a CURRENT_USER_ID is provided by the system context, proceed silently. If not, you MUST ask for the 9-digit Patient ID before calling tools that require user data.
-- BREVITY: Use bullet points. Do not use conversational filler.
+- IDENTITY: HARD STOP. If "CURRENT_USER_ID" is not explicitly written at the bottom of this prompt, you DO NOT KNOW the user. You MUST NOT call 'check_user_status'. You MUST politely ask for their 9-digit Patient ID before providing any personalized data.
 - DATA SOURCE: Use ONLY information provided by tools. If a medication is missing, state that you don't have information on it.
 - ALTERNATIVES: If a medication is out of stock, use the 'get_alternatives' tool to find options with the same active ingredient, but remind the user they need a new prescription for any alternative.
+- SAFETY FIRST: If an allergy conflict is detected, you MUST start your response with "⚠️ CRITICAL SAFETY ALERT: ALLERGY DETECTED" in bold. 
+- NO USAGE FOR ALLERGIES: If a patient is allergic, do NOT provide dosage instructions. Instead, explain the conflict and suggest consulting a doctor for an alternative.
+- DIRECT ANSWERS: Always answer the user's specific question in the first sentence before providing the structured bullet points.
 """
+
 
 def get_medication_info(name: str):
     """Fetches factual data about a medication (ingredients, restrictions)."""
@@ -46,8 +51,18 @@ def check_user_status(user_id: str, med_name: str):
     # Data-driven Allergy Check
     allergy_conflict = None
     if med.get("drug_class") in user.get("allergies", []):
-        allergy_conflict = f"SAFETY ALERT: Patient history shows an allergy to {med['drug_class']}."
-
+        allergy_conflict = f"⚠️ CRITICAL SAFETY ALERT: Patient history shows an allergy to {med['drug_class']}."
+        # If allergic, we wipe the instructions to prevent the agent from encouraging use
+        return {
+            "user_name": user["name"],
+            "medication": m_name,
+            "authorized_by_rx": False,
+            "patient_usage_instructions": "DO NOT USE. Allergy detected.",
+            "medication_restrictions": "ALLERGY CONFLICT.",
+            "allergy_conflict": allergy_conflict,
+            "stock_available": med.get("stock_level", 0),
+            "active_ingredients": med.get("active_ingredients", "Unknown")
+        }
     # Patient-specific usage from the User's prescription record
     rx_entry = next((rx for rx in user.get("prescriptions", []) if rx["name"] == m_name), None)
 
@@ -118,7 +133,10 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "active_ingredient": {"type": "string", "description": "The chemical ingredient to search for."}
+                    "active_ingredient": {"type": "string",
+                                          "description": "The chemical ingredient to search for."},
+                    "current_med_name": {"type": "string",
+                                         "description": "The med name to exclude from results."}
                 },
                 "required": ["active_ingredient"]
             }
