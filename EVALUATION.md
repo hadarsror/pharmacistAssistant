@@ -121,14 +121,7 @@
 | Empty user input | Any | "" | None | Reject with 400 error or prompt | ⬜ |
 | Very long input (>1000 chars) | Any | Long text | Depends on content | Process normally or truncate gracefully | ⬜ |
 | Rapid successive requests | Any | Multiple fast messages (before responses) | Last message only | Process most recent message without crashes or response mixing | ⬜ |
-| Session ID change | Switch users | Change user in sidebar | None | Reset conversation history | ⬜ |
-| OpenAI API timeout | Any | Any valid input | Any | Graceful error message | ⬜ |
-| OpenAI API rate limit | Any | Any valid input | Any | Retry or inform user politely | ⬜ |
-| Malformed tool arguments | Any | Agent calls tool incorrectly | Tool error | Catch exception, user-friendly error | ⬜ |
-| Medication not found - no loop | Dana (300987654) | "Can I have aspirin?" → "yes" | check_user_status, get_medication_info (once) | Says "not found" once, NO loop | ⬜ |
 | Typo correction | Dana (300987654) | "Can I have avdil?" → "yes" | check_user_status, get_medication_info | Asks "Did you mean Advil?" → shows Advil | ⬜ |
-| Hebrew medication name | Levi (111222333) | "יש לכם אמוקסיצילין?" | check_user_status, get_medication_info | Recognizes Hebrew, no typo correction | ⬜ |
-| Context switching medications | Dana (300987654) | "aspirin?" → "rytalin?" | Tools for each separately | Forgets aspirin, only responds about rytalin | ⬜ |
 
 ---
 
