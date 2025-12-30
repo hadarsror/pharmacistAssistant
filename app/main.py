@@ -86,8 +86,14 @@ def ensure_disclaimer(response: str, session_id: str) -> str:
     
     disclaimer = disclaimer_he if is_hebrew else disclaimer_en
     
+    # Check for core disclaimer phrase (not exact match to avoid duplicates)
+    core_phrase_en = "This information is for reference only"
+    core_phrase_he = "מידע זה למטרות התייחסות בלבד"
+    
+    has_disclaimer = core_phrase_en in response or core_phrase_he in response
+    
     # Only add if not already present
-    if disclaimer not in response and response.strip():
+    if not has_disclaimer and response.strip():
         return response + "\n\n" + disclaimer
     return response
 
@@ -96,6 +102,10 @@ def cleanup_old_sessions():
     """
     Remove oldest sessions if limit exceeded.
     Keeps system from running out of memory.
+    
+    Note: Cleanup runs on new requests rather than background task
+    to keep deployment simple (no additional threads/workers needed).
+    In high-traffic production, consider using APScheduler or similar.
     """
     if len(chat_sessions) > MAX_SESSIONS:
         # Remove oldest 20% of sessions
@@ -128,13 +138,14 @@ async def execute_tool_call(tool_name: str, args: Dict[str, Any]) -> Dict[
         return {"error": f"Tool execution failed: {str(e)}"}
 
 
-async def agent_loop(messages: List[Dict[str, Any]]):
+async def agent_loop(messages: List[Dict[str, Any]], session_id: str = "default"):
     """
     Main agent loop that handles streaming responses and tool calls.
     Implements parallel tool execution for better performance.
 
     Args:
         messages: Conversation history
+        session_id: Session identifier for context (used for disclaimer enforcement)
 
     Yields:
         Server-sent events containing content chunks and tool call notifications
@@ -201,11 +212,17 @@ async def agent_loop(messages: List[Dict[str, Any]]):
                 yield f"data: {json.dumps({'tool': tool_call['name'], 'args': json.loads(tool_call['args'])})}\n\n"
 
             # Recursive call to get final response
-            async for next_chunk in agent_loop(messages):
+            async for next_chunk in agent_loop(messages, session_id):
                 yield next_chunk
         else:
-            # No tool calls, final response
-            messages.append({"role": "assistant", "content": current_content})
+            # No tool calls, final response - ENFORCE DISCLAIMER
+            final_content = ensure_disclaimer(current_content, session_id)
+            messages.append({"role": "assistant", "content": final_content})
+            
+            # If disclaimer was added, yield the additional content
+            if len(final_content) > len(current_content):
+                disclaimer_addition = final_content[len(current_content):]
+                yield f"data: {json.dumps({'content': disclaimer_addition})}\n\n"
 
     except Exception as e:
         logger.error(f"Error in agent loop: {str(e)}", exc_info=True)
@@ -271,7 +288,7 @@ async def chat(user_input: str, session_id: str = "default"):
 
     # Use session history directly (no copy needed)
     return StreamingResponse(
-        agent_loop(chat_sessions[session_id]),
+        agent_loop(chat_sessions[session_id], session_id),
         media_type="text/event-stream"
     )
 
