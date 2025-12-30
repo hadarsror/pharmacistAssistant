@@ -48,29 +48,45 @@ def get_medication_info(name: str) -> Dict[str, Any]:
     """
     Retrieve factual information about a specific medication.
 
+
     Args:
-        name: Medication name (case-insensitive, will be capitalized)
+        name: Medication name (English or Hebrew, case-insensitive for English)
+
 
     Returns:
-        Dictionary containing medication details: sku, name, drug_class,
+        Dictionary containing medication details: sku, name, name_hebrew, drug_class,
         active_ingredients, requires_rx, stock_level, restrictions.
         Returns error dictionary if medication not found.
+
 
     Error Handling:
         - Medication not found: Returns {"error": "Medication not found."}
 
+
     Fallback Behavior:
-        - Case-insensitive matching via capitalization
+        - Case-insensitive matching via capitalization for English names
+        - Exact match for Hebrew names
     """
-    name = name.strip().capitalize()
+    name = name.strip()
     logger.info(f"Fetching medication info for: {name}")
 
-    med = MEDICATIONS_DB.get(name)
-    if not med:
-        logger.warning(f"Medication not found: {name}")
-        return {"error": "Medication not found."}
+    # Try English name (case-insensitive via capitalization)
+    name_capitalized = name.capitalize()
+    med = MEDICATIONS_DB.get(name_capitalized)
+    
+    if med:
+        return med
+    
+    # Try Hebrew name (exact match)
+    for med_key, med_data in MEDICATIONS_DB.items():
+        if med_data.get("name_hebrew") == name:
+            logger.info(f"Found medication by Hebrew name: {name} -> {med_key}")
+            return med_data
+    
+    # Not found
+    logger.warning(f"Medication not found: {name}")
+    return {"error": "Medication not found."}
 
-    return med
 
 
 def check_user_status(user_id: str, med_name: str) -> Dict[str, Any]:
@@ -82,7 +98,7 @@ def check_user_status(user_id: str, med_name: str) -> Dict[str, Any]:
 
     Args:
         user_id: Patient identifier (9-digit string)
-        med_name: Medication name (case-insensitive)
+        med_name: Medication name (English or Hebrew, case-insensitive for English)
 
     Returns:
         Dictionary containing:
@@ -102,26 +118,40 @@ def check_user_status(user_id: str, med_name: str) -> Dict[str, Any]:
     Fallback Behavior:
         - If no prescription exists but medication doesn't require Rx: authorized=True
         - If allergy detected: Sets usage_instructions to "DO NOT USE"
+        - Case-insensitive matching via capitalization for English names
+        - Exact match for Hebrew names
     """
     user_id = user_id.strip()
-    med_name = med_name.strip().capitalize()
-    logger.info(
-        f"Checking user status: user_id={user_id}, med_name={med_name}")
+    med_name_original = med_name.strip()
+    logger.info(f"Checking user status: user_id={user_id}, med_name={med_name_original}")
 
     user = USERS_DB.get(user_id)
-    med = MEDICATIONS_DB.get(med_name)
-
+    
     if not user:
         logger.error(f"Patient not found: {user_id}")
         return {"error": f"Patient ID {user_id} not found."}
 
+    # Try to find medication by English name (case-insensitive)
+    med_name_capitalized = med_name_original.capitalize()
+    med = MEDICATIONS_DB.get(med_name_capitalized)
+    med_key = med_name_capitalized
+    
+    # If not found, try Hebrew name
     if not med:
-        logger.error(f"Medication not found: {med_name}")
-        return {"error": f"Medication '{med_name}' not found."}
+        for key, med_data in MEDICATIONS_DB.items():
+            if med_data.get("name_hebrew") == med_name_original:
+                logger.info(f"Found medication by Hebrew name: {med_name_original} -> {key}")
+                med = med_data
+                med_key = key
+                break
+    
+    if not med:
+        logger.error(f"Medication not found: {med_name_original}")
+        return {"error": f"Medication '{med_name_original}' not found."}
 
-    # Check prescription authorization
+    # Check prescription authorization (prescriptions use English names)
     rx_entry = next(
-        (rx for rx in user.get("prescriptions", []) if rx["name"] == med_name),
+        (rx for rx in user.get("prescriptions", []) if rx["name"] == med_key),
         None
     )
     is_authorized = rx_entry is not None or not med.get("requires_rx", True)
@@ -139,16 +169,14 @@ def check_user_status(user_id: str, med_name: str) -> Dict[str, Any]:
         for allergy in user_allergies:
             if allergy in active_ingredients:
                 allergy_conflict = f"Patient is allergic to active ingredient {allergy}."
-                logger.warning(
-                    f"Allergy conflict detected: {allergy_conflict}")
+                logger.warning(f"Allergy conflict detected: {allergy_conflict}")
                 break
 
     result = {
         "user_name": user["name"],
-        "medication": med_name,
+        "medication": med_key,  # Return English name for consistency
         "authorized_by_rx": is_authorized,
-        "patient_usage_instructions": rx_entry[
-            "instructions"] if rx_entry else "No specific prescription found.",
+        "patient_usage_instructions": rx_entry["instructions"] if rx_entry else "No specific prescription found.",
         "medication_restrictions": med.get("restrictions", "None listed."),
         "allergy_conflict": allergy_conflict,
         "stock_available": med.get("stock_level", 0),
@@ -160,6 +188,7 @@ def check_user_status(user_id: str, med_name: str) -> Dict[str, Any]:
         result["medication_restrictions"] = "ALLERGY CONFLICT."
 
     return result
+
 
 
 def get_alternatives(

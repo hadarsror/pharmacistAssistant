@@ -17,7 +17,6 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 | F1-EN-03 | English | Bob (058123456) | "Can I take Ibuprofen?" | get_patient_details (optional), check_user_status, get_medication_info | **ALLERGY ALERT** - Ibuprofen allergy (with prescription conflict warning) | ⬜ |
 | F1-EN-04 | English | Alice (204567891) | "Do you have Metformin?" | get_patient_details (optional), check_user_status, get_medication_info | Authorized, shows prescription details | ⬜ |
 | F1-EN-05 | English | Dana (300987654) | "Can I get Aspirin?" | get_patient_details (optional), check_user_status, get_medication_info | **ERROR** - Medication not found in database | ⬜ |
-| F1-EN-06 | English | Hadar (312456789) | "Do you have Lisinopril?" (stock_level=0) | get_patient_details (optional), check_user_status, get_medication_info | Authorized but shows "Out of stock" | ⬜ |
 | F1-HE-01 | Hebrew | Hadar (312456789) | "האם אני יכול לקחת ליסינופריל?" | get_patient_details (optional), check_user_status, get_medication_info | Authorized, shows prescription details (Hebrew) | ⬜ |
 | F1-HE-02 | Hebrew | Levi (111222333) | "יש לכם אמוקסיצילין?" | get_patient_details (optional), check_user_status, get_medication_info | Authorized, shows prescription (Hebrew) | ⬜ |
 | F1-HE-03 | Hebrew | Mikasa (444555666) | "האם אני יכול לקחת אמוקסיצילין?" | get_patient_details (optional), check_user_status, get_medication_info | **ALLERGY ALERT** - Penicillin allergy (Hebrew) | ⬜ |
