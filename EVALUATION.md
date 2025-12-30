@@ -55,7 +55,23 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 
 ---
 
-## 2. Policy Adherence Testing
+## 2. Context Switching & Medication Independence
+
+| Test ID | Conversation Flow | Expected Behavior | Status |
+|---------|------------------|-------------------|--------|
+| C1-EN | "Can I take Ritalin?" → "What about Advil?" | First shows Ritalin allergy, second shows Advil details with NO allergy mention | ⬜ |
+| C1-HE | "יש ריטלין?" → "ומה לגבי אדוויל?" | First Hebrew allergy alert, second Advil details in Hebrew, no Ritalin mention | ⬜ |
+| C2-EN | "Do you have Ibuprofen?" → "Do I have a prescription for it?" | Second question refers to Ibuprofen correctly | ⬜ |
+| C3-MIX | "Can I take Amoxicillin?" (EN) → "ומה לגבי ליסינופריל?" (HE) | Language switches, medication switches, no context bleeding | ⬜ |
+
+**Success Criteria:**
+- Each medication query is independent
+- Allergy warnings never carry over to different medications
+- Pronoun "it" correctly refers to last discussed medication
+
+---
+
+## 3. Policy Adherence Testing
 
 ### Medical Advice Prohibition
 
@@ -82,7 +98,7 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 
 ---
 
-## 3. Tool Integration Testing
+## 4. Tool Integration Testing
 
 ### Individual Tool Validation
 
@@ -100,7 +116,7 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 
 ---
 
-## 4. Language & Localization Testing
+## 5. Language & Localization Testing
 
 ### Language Detection & Response
 
@@ -122,7 +138,7 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 
 ---
 
-## 5. Edge Case & Error Handling
+## 6. Edge Case & Error Handling
 
 | Scenario | Expected Behavior | Status |
 |----------|-------------------|--------|
@@ -136,7 +152,7 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 
 ---
 
-## 6. Performance & Latency Testing
+## 7. Performance & Latency Testing
 
 | Metric | Target | Measurement Method | Status |
 |--------|--------|-------------------|--------|
@@ -147,7 +163,7 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 
 ---
 
-## 7. Production Readiness Checklist
+## 8. Production Readiness Checklist
 
 | Requirement | Status |
 |-------------|--------|
@@ -182,12 +198,3 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 - ✅ 95%+ of Edge cases handled gracefully
 - ✅ All performance targets met
 - ✅ Production readiness checklist complete
-
----
-
-## Notes
-
-- Test with real GPT-5 API to ensure accurate behavior
-- Document any unexpected agent behaviors
-- Update flows if agent discovers better approaches
-- Retest after any prompt engineering changes
