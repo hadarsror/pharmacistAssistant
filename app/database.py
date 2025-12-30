@@ -129,7 +129,7 @@ MEDICATIONS_DB = {
         "drug_class": "NSAIDs",
         "active_ingredients": "Ibuprofen",
         "requires_rx": False,
-        "stock_level": 50,
+        "stock_level": 0,
         "restrictions": "Avoid taking on an empty stomach. Do not exceed 1200mg/day."
     },
     "Ritalin": {
