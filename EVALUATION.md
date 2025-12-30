@@ -30,7 +30,7 @@
 |---------|----------|-----------|-------|----------------|------------------|--------|
 | F2-EN-01 | English | Bob (058123456) | "I need alternative to Ibuprofen" | check_user_status | **CRITICAL SAFETY ALERT - PRESCRIPTION CONFLICT**: Detects Bob has prescription for Advil (contains Ibuprofen) but is allergic to it. Prioritizes safety warning over suggesting alternatives. | ⬜ |
 | F2-EN-02 | English | Dana (300987654) | "Something else instead of Ibuprofen" | get_patient_details (optional), get_alternatives, check_user_status, get_medication_info | Suggests Advil, verifies safe for Dana | ⬜ |
-| F2-EN-03 | English | Maya (123123123) | "Alternative to Ritalin?" | get_patient_details (optional), get_alternatives | No alternatives found (unique active ingredient) | ⬜ |
+| F2-EN-03 | English | Maya (123123123) | "Alternative to Ritalin?" | check_user_status | **CRITICAL SAFETY ALERT - PRESCRIPTION CONFLICT**: Detects Maya has prescription for Ritalin (contains Methylphenidate) but is allergic to it. Shows conflict warning instead of searching for alternatives (correct prioritization). | ⬜ |
 | F2-EN-04 | English | Hadar (312456789) | "Alternative to Amoxicillin" | get_patient_details (optional), get_alternatives | No alternatives or error (Penicillin class unique in DB) | ⬜ |
 | F2-EN-05 | English | Dana (300987654) | "Alternative to Aspirin" | get_patient_details (optional), get_alternatives | **ERROR** - Original medication not found | ⬜ |
 | F2-EN-06 | English | Bob (058123456) | "Alternative to Advil" (when stock=0) | get_patient_details (optional), get_alternatives, check_user_status, get_medication_info | Shows alternative but indicates out of stock | ⬜ |
