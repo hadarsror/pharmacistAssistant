@@ -26,6 +26,8 @@ def get_alignment(direction):
 user_ids = ["Select an ID..."] + list(USERS_DB.keys())
 user_id_selection = st.sidebar.selectbox("Select User ID", user_ids, index=0)
 
+# IF sidebar is "Select an ID...", we send "default" to backend.
+# The backend/agent will then see "default" and trigger the "Ask for ID" protocol.
 session_id = "default" if user_id_selection == "Select an ID..." else user_id_selection
 
 if "last_user_id" not in st.session_state:

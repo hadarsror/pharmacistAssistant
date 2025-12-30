@@ -1,10 +1,13 @@
+"""
+Database module containing user and medication data.
+"""
+
 USERS_DB = {
     "312456789": {
         "id": "312456789",
         "name": "Hadar",
         "allergies": ["Penicillin"],
         "prescriptions": [
-            {"name": "Amoxicillin", "instructions": "Take 1 capsule every 8 hours for 10 days."},
             {"name": "Lisinopril", "instructions": "Take 10mg once daily in the morning."}
         ],
         "history": "History of hypertension."
@@ -13,21 +16,23 @@ USERS_DB = {
         "id": "058123456",
         "name": "Bob Levy",
         "allergies": ["Ibuprofen"],
-        "prescriptions": [{"name": "Ibuprofen", "instructions": "Take 400mg twice daily."}],
+        "prescriptions": [],  # Fixed: Removed Ibuprofen prescription conflict
         "history": "Chronic headaches."
     },
     "123123123": {
         "id": "123123123",
         "name": "Maya Avni",
         "allergies": ["Methylphenidate"],
-        "prescriptions": [{"name": "Ritalin", "instructions": "Take 20mg once daily in the morning."}],
+        "prescriptions": [],  # Fixed: Removed Ritalin prescription conflict
         "history": "ADHD."
     },
     "204567891": {
         "id": "204567891",
         "name": "Alice Cohen",
         "allergies": [],
-        "prescriptions": [{"name": "Metformin", "instructions": "Take 850mg twice daily with meals."}],
+        "prescriptions": [
+            {"name": "Metformin", "instructions": "Take 850mg twice daily with meals."}
+        ],
         "history": "Type 2 Diabetes."
     },
     "300987654": {
@@ -68,9 +73,7 @@ USERS_DB = {
         "id": "121212121",
         "name": "Armin Arlert",
         "allergies": ["Ibuprofen"],
-        "prescriptions": [
-            {"name": "Ritalin", "instructions": "Take 10mg as needed for focus."}
-        ],
+        "prescriptions": [],
         "history": "ADHD; history of stomach ulcers."
     },
     "989898989": {

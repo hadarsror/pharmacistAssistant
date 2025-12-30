@@ -1,7 +1,7 @@
-fastapi
-uvicorn
-openai
-python-dotenv
-pydantic
-streamlit
-requests
+fastapi>=0.109.1
+uvicorn[standard]>=0.24.0
+openai>=2.14.0
+python-dotenv>=1.0.0
+pydantic>=2.5.0
+streamlit>=1.28.0
+requests>=2.32.4
