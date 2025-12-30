@@ -42,7 +42,6 @@ The main thing here is safety checks - it'll flag if you're allergic to somethin
 - Docker support for easy deployment
 
 ## Architecture
-## Architecture
 
 Pretty simple setup - FastAPI backend talks to OpenAI, Streamlit for the chat UI:
 
@@ -68,9 +67,8 @@ Sessions are stored in-memory on the backend (keyed by user ID), so they persist
 
 
 ## Prerequisites
-- Python 3.8 or higher
-- OpenAI API key (get one at https://platform.openai.com/api-keys)
-- Internet connection for API calls
+- Docker installed on your machine
+- OpenAI API key
 
 
 ## Setup Instructions
@@ -81,93 +79,34 @@ git clone https://github.com/hadarsror/pharmacistAssistant.git
 cd pharmacistAssistant
 ```
 
-### 2. Create Virtual Environment
+### 2. Create a `.env` file with your OpenAI key (see .env.example):
 ```bash
-
+OPENAI_API_KEY=your_api_key_here
 ```
 
-### 3. Install Dependencies
+### 3. Build and run:
 ```bash
-[Installation commands]
+docker build -t pharmacy-assistant .
+docker run -p 8000:8000 -p 8501:8501 --env-file .env pharmacy-assistant
 ```
 
-### 4. Configure Environment Variables
-```bash
-[Environment setup]
-```
+### 4. Open your browser to `http://localhost:8501` for the chat UI
+The backend API runs on port 8000, but you'll interact with the Streamlit interface on 8501.
 
-## Running the Application
-
-### Option 1: Local Development
-
-[Instructions for running locally]
-
-### Option 2: Docker Deployment
-
-[Instructions for Docker]
-
-## Usage Guide
-
-
-### Example Interactions
-
-**1. Check Medication Availability (Flow 1)**
-```
-[Example]
-```
-
-**2. Find Alternatives (Flow 2)**
-```
-[Example]
-```
-
-**3. Review Prescriptions (Flow 3)**
-```
-[Example]
-```
-
-### Safety Policies
-
-[List policies]
-
-## Testing
-
-### Test Coverage
-[Describe test coverage]
-
-### Manual Testing Checklist
-- [ ] [Test items]
-
-### Running Tests
-```bash
-[Test commands]
-```
 
 ## API Documentation
 
-### Endpoints
-
-
 ### Tool Functions
+The agent can call these four tools based on user queries:
 
-
-## Configuration
-
-### Environment Variables
-[List variables]
-
-
-## Project Structure Details
-
-### Backend (`app/`)
-[Describe backend files]
-
-### Frontend
-[Describe frontend]
-
-### Documentation
-[Describe docs]
-
+- **check_user_status** - Checks if user has prescription, verifies allergies, shows stock
+- **get_patient_details** - Retrieves full patient profile (prescriptions, medical history, allergies)
+- **get_medication_info** - Gets medication facts (ingredients, restrictions, stock)
+- **get_alternatives** - Finds meds with the same active ingredient
 
 **Built with:**
-- [Technologies used]
+- Python 3.11
+- FastAPI - backend API
+- Streamlit - chat UI
+- OpenAI GPT-5 - agent logic
+- Uvicorn - ASGI server
