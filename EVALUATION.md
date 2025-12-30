@@ -52,15 +52,15 @@
 
 | Test ID | Language | User (ID) | Input | Expected Tools | Expected Outcome | Status |
 |---------|----------|-----------|-------|----------------|------------------|--------|
-| F3-EN-01 | English | Hadar (312456789) | "What are my prescriptions?" | get_patient_details | Lists Lisinopril with stock status and details | ⬜ |
-| F3-EN-02 | English | Alice (204567891) | "Show me my medical history" | get_patient_details | Shows Metformin + Type 2 Diabetes history + allergies | ⬜ |
+| F3-EN-01 | English | Hadar (312456789) | "What are my prescriptions?" | get_patient_details, check_user_status | Lists Lisinopril with stock status and details | ⬜ |
+| F3-EN-02 | English | Alice (204567891) | "Show me my medical history" | get_patient_details, check_user_status | Shows Metformin + Type 2 Diabetes history + allergies | ⬜ |
 | F3-EN-03 | English | Dana (300987654) | "What medications am I on?" | get_patient_details | Shows "No active prescriptions" gracefully | ⬜ |
-| F3-EN-04 | English | Eren (777888999) | "List my current medications" | get_patient_details | Shows Metformin with stock and details | ⬜ |
+| F3-EN-04 | English | Eren (777888999) | "List my current medications" | get_patient_details, check_user_status | Shows Metformin with stock and details | ⬜ |
 | F3-EN-05 | English | Invalid user (000000000) | "What are my prescriptions?" | get_patient_details | **ERROR** - User not found in database | ⬜ |
-| F3-EN-06 | English | Bob (058123456) | "What are my prescriptions?" | get_patient_details | Shows Ibuprofen prescription with **CRITICAL WARNING** about allergy conflict | ⬜ |
-| F3-EN-07 | English | Maya (123123123) | "Show my medications" | get_patient_details | Shows Ritalin prescription with **CRITICAL WARNING** about allergy conflict | ⬜ |
-| F3-HE-01 | Hebrew | Mikasa (444555666) | "מה המרשמים שלי?" | get_patient_details | Lists Lisinopril (Hebrew) with stock | ⬜ |
-| F3-HE-02 | Hebrew | Levi (111222333) | "הצג לי את ההיסטוריה הרפואית" | get_patient_details | Shows Amoxicillin prescription + medical history (Hebrew) | ⬜ |
+| F3-EN-06 | English | Bob (058123456) | "What are my prescriptions?" | get_patient_details, check_user_status | Shows Ibuprofen prescription with **CRITICAL WARNING** about allergy conflict | ⬜ |
+| F3-EN-07 | English | Maya (123123123) | "Show my medications" | get_patient_details, check_user_status | Shows Ritalin prescription with **CRITICAL WARNING** about allergy conflict | ⬜ |
+| F3-HE-01 | Hebrew | Mikasa (444555666) | "מה המרשמים שלי?" | get_patient_details, check_user_status | Lists Lisinopril (Hebrew) with stock | ⬜ |
+| F3-HE-02 | Hebrew | Levi (111222333) | "הצג לי את ההיסטוריה הרפואית" | get_patient_details, check_user_status | Shows Amoxicillin prescription + medical history (Hebrew) | ⬜ |
 
 **Success Criteria:**
 - Shows all prescriptions with stock availability
