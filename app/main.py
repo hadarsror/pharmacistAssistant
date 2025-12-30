@@ -32,6 +32,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Constants
+MAX_INPUT_LENGTH = 1000
+MAX_MESSAGES_PER_SESSION = 50
+MAX_SESSIONS = 100
+
 # Load environment variables
 load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
@@ -60,6 +65,44 @@ TOOL_MAP = {
 
 # In-memory session store
 chat_sessions: Dict[str, List[Dict[str, Any]]] = {}
+
+
+def ensure_disclaimer(response: str, session_id: str) -> str:
+    """
+    Ensure all responses contain appropriate disclaimer.
+    
+    Args:
+        response: The agent's response text
+        session_id: Session ID to determine language context
+        
+    Returns:
+        Response with disclaimer appended if missing
+    """
+    disclaimer_en = "This information is for reference only. For medical advice, please consult your doctor or pharmacist."
+    disclaimer_he = "מידע זה למטרות התייחסות בלבד. לייעוץ רפואי, אנא היוועצו עם הרופא או הרוקח שלכם."
+    
+    # Check if response is in Hebrew (simple heuristic: contains Hebrew characters)
+    is_hebrew = bool(re.search(r'[\u0590-\u05FF]', response))
+    
+    disclaimer = disclaimer_he if is_hebrew else disclaimer_en
+    
+    # Only add if not already present
+    if disclaimer not in response and response.strip():
+        return response + "\n\n" + disclaimer
+    return response
+
+
+def cleanup_old_sessions():
+    """
+    Remove oldest sessions if limit exceeded.
+    Keeps system from running out of memory.
+    """
+    if len(chat_sessions) > MAX_SESSIONS:
+        # Remove oldest 20% of sessions
+        sessions_to_remove = list(chat_sessions.keys())[:MAX_SESSIONS // 5]
+        for session_id in sessions_to_remove:
+            del chat_sessions[session_id]
+            logger.info(f"Removed old session: {session_id}")
 
 
 async def execute_tool_call(tool_name: str, args: Dict[str, Any]) -> Dict[
@@ -181,47 +224,54 @@ async def chat(user_input: str, session_id: str = "default"):
     Returns:
         Streaming response with server-sent events
     """
+    # Input validation
     if not user_input or not user_input.strip():
         raise HTTPException(status_code=400,
                             detail="user_input cannot be empty")
+    
+    user_input = user_input.strip()
+    
+    if len(user_input) > MAX_INPUT_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Input too long (max {MAX_INPUT_LENGTH} characters)"
+        )
 
     logger.info(
         f"Chat request - session_id: {session_id}, input: {user_input[:100]}")
 
-    # Initialize session
+    # Cleanup old sessions periodically
+    cleanup_old_sessions()
+
+    # Initialize session with context injection
     if session_id not in chat_sessions:
         chat_sessions[session_id] = [
             {"role": "system", "content": SYSTEM_PROMPT}
         ]
+        
+        # Inject user context ONCE at session start if valid patient ID
+        if session_id in USERS_DB:
+            chat_sessions[session_id].append({
+                "role": "system",
+                "content": f"CONTEXT UPDATE: CURRENT_USER_ID is {session_id}. Patient is authenticated."
+            })
+            logger.info(f"User context injected for new session: {session_id}")
 
-    # Prepare messages for this request
-    messages_to_send = chat_sessions[session_id].copy()
+    # Limit session history to prevent memory issues
+    if len(chat_sessions[session_id]) > MAX_MESSAGES_PER_SESSION:
+        # Keep system prompt + context + last N messages
+        system_messages = [msg for msg in chat_sessions[session_id] if msg["role"] == "system"]
+        recent_messages = chat_sessions[session_id][-MAX_MESSAGES_PER_SESSION:]
+        chat_sessions[session_id] = system_messages + recent_messages
+        logger.info(f"Session {session_id} history trimmed to {len(chat_sessions[session_id])} messages")
 
-    # Inject user context if session_id is a valid patient ID
-    if session_id in USERS_DB:
-        messages_to_send.append({
-            "role": "system",
-            "content": f"CONTEXT UPDATE: CURRENT_USER_ID is {session_id}. Patient is authenticated."
-        })
-        logger.info(f"User context injected for patient: {session_id}")
-    else:
-        # Fallback: detect user ID in message
-        if match := re.search(r"\b\d{9}\b", user_input):
-            potential_id = match.group(0)
-            if potential_id in USERS_DB:
-                messages_to_send.append({
-                    "role": "system",
-                    "content": f"CONTEXT UPDATE: CURRENT_USER_ID is {potential_id}."
-                })
-                logger.info(f"User ID detected in message: {potential_id}")
-
-    # Add user message
+    # Add user message to persistent session
     user_msg = {"role": "user", "content": user_input}
     chat_sessions[session_id].append(user_msg)
-    messages_to_send.append(user_msg)
 
+    # Use session history directly (no copy needed)
     return StreamingResponse(
-        agent_loop(messages_to_send),
+        agent_loop(chat_sessions[session_id]),
         media_type="text/event-stream"
     )
 

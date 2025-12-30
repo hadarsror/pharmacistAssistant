@@ -77,9 +77,9 @@ def get_medication_info(name: str) -> Dict[str, Any]:
     if med:
         return med
     
-    # Try Hebrew name (exact match)
+    # Try Hebrew name (exact match with normalization)
     for med_key, med_data in MEDICATIONS_DB.items():
-        if med_data.get("name_hebrew") == name:
+        if med_data.get("name_hebrew", "").strip() == name:
             logger.info(f"Found medication by Hebrew name: {name} -> {med_key}")
             return med_data
     
@@ -136,10 +136,10 @@ def check_user_status(user_id: str, med_name: str) -> Dict[str, Any]:
     med = MEDICATIONS_DB.get(med_name_capitalized)
     med_key = med_name_capitalized
     
-    # If not found, try Hebrew name
+    # If not found, try Hebrew name (with normalization)
     if not med:
         for key, med_data in MEDICATIONS_DB.items():
-            if med_data.get("name_hebrew") == med_name_original:
+            if med_data.get("name_hebrew", "").strip() == med_name_original:
                 logger.info(f"Found medication by Hebrew name: {med_name_original} -> {key}")
                 med = med_data
                 med_key = key
@@ -172,9 +172,13 @@ def check_user_status(user_id: str, med_name: str) -> Dict[str, Any]:
                 logger.warning(f"Allergy conflict detected: {allergy_conflict}")
                 break
 
+    # Determine which name to return based on input language
+    med_name_to_return = med_name_original if med_name_original == med.get("name_hebrew") else med_key
+
     result = {
         "user_name": user["name"],
-        "medication": med_key,  # Return English name for consistency
+        "user_name_hebrew": user.get("name_hebrew", user["name"]),
+        "medication": med_name_to_return,  # Return name in the language requested
         "authorized_by_rx": is_authorized,
         "patient_usage_instructions": rx_entry["instructions"] if rx_entry else "No specific prescription found.",
         "medication_restrictions": med.get("restrictions", "None listed."),
