@@ -37,7 +37,7 @@
 | F2-EN-05 | English | Dana (300987654) | "Alternative to Aspirin" | get_patient_details (optional), get_alternatives | **ERROR** - Original medication not found | ⬜ |
 | F2-EN-06 | English | Dana (300987654) | "Alternative to Advil" (when Advil stock=0) | get_alternatives, check_user_status | Suggests Ibuprofen as alternative (200 units available), verifies safe for Dana. Tests finding alternatives when original is out of stock. | ⬜ |
 | F2-HE-01 | Hebrew | Dana (300987654) | "אני צריך חלופה לאדוויל" | get_patient_details (optional), get_alternatives, check_user_status, get_medication_info | Suggests Ibuprofen (Hebrew), verifies safe | ⬜ |
-| F2-HE-02 | Hebrew | Armin (121212121) | "משהו אחר במקום איבופרופן" | get_patient_details (optional), get_alternatives, check_user_status, get_medication_info | Suggests Advil, then shows **ALLERGY ALERT** (Hebrew) | ⬜ |
+| F2-HE-02 | Hebrew | Armin (121212121) | "משהו אחר במקום איבופרופן" | check_user_status | **ALLERGY ALERT** for Ibuprofen (Hebrew). Shows allergy warning instead of searching for alternatives (correct prioritization). | ⬜ |
 
 **Success Criteria:**
 - Finds alternatives with correct active ingredient
