@@ -114,59 +114,13 @@
 
 ---
 
-## 4. Tool Integration Testing
-
-| Tool | Test Input | Expected Output | Error Handling | Status |
-|------|------------|-----------------|----------------|--------|
-| get_patient_details | user_id="312456789" | Returns Hadar's details | N/A | ⬜ |
-| get_patient_details | user_id="000000000" | {"error": "User not found."} | Graceful error | ⬜ |
-| get_medication_info | name="Ibuprofen" | Returns full details | N/A | ⬜ |
-| get_medication_info | name="איבופרופן" | Returns full details (Hebrew) | N/A | ⬜ |
-| get_medication_info | name="Aspirin" | {"error": "Medication not found."} | Graceful error | ⬜ |
-| check_user_status | user_id="312456789", med_name="Lisinopril" | Returns authorized, no allergy | N/A | ⬜ |
-| check_user_status | user_id="123123123", med_name="Ritalin" | Returns allergy + prescription conflict | N/A | ⬜ |
-| check_user_status | user_id="058123456", med_name="Ibuprofen" | Returns allergy + prescription conflict | N/A | ⬜ |
-| check_user_status | user_id="000000000", med_name="Ibuprofen" | {"error": "Patient ID ... not found."} | Graceful error | ⬜ |
-| check_user_status | user_id="312456789", med_name="Aspirin" | {"error": "Medication '...' not found."} | Graceful error | ⬜ |
-| check_user_status | user_id="111222333", med_name="אמוקסיצילין" | Works with Hebrew medication name | N/A | ⬜ |
-| get_alternatives | active_ingredient="Ibuprofen", current_med_name="Advil" | Returns ["Ibuprofen"] | N/A | ⬜ |
-| get_alternatives | active_ingredient="Ibuprofen", current_med_name="Ibuprofen" | Returns ["Advil"] | N/A | ⬜ |
-| get_alternatives | active_ingredient="Methylphenidate" | {"error": "No alternatives found"} | Graceful error | ⬜ |
-
----
-
-## 5. Language & Localization Testing
-
-### Language Detection
-
-| Test ID | User (ID) | Input Language | Input Example | Expected Tools | Expected Response Language | Status |
-|---------|-----------|----------------|---------------|----------------|---------------------------|--------|
-| L1-01 | Dana (300987654) | English | "Do you have Ibuprofen?" | get_patient_details (optional), check_user_status, get_medication_info | English | ⬜ |
-| L1-02 | Dana (300987654) | Hebrew | "יש לכם איבופרופן?" | get_patient_details (optional), check_user_status, get_medication_info | Hebrew | ⬜ |
-| L1-03 | Dana (300987654) | English → Hebrew | "Do you have Ibuprofen?" → "ומה לגבי אדוויל?" | Tools for both | Switches to Hebrew immediately | ⬜ |
-| L1-04 | Dana (300987654) | Hebrew → English | "יש לכם איבופרופן?" → "What about Advil?" | Tools for both | Switches to English immediately | ⬜ |
-
-### Medical Terminology Translation
-
-| Term (English) | Expected Term (Hebrew) | Status |
-|----------------|------------------------|--------|
-| Active Ingredients | מרכיבים פעילים | ⬜ |
-| Prescription Status | סטטוס מרשם | ⬜ |
-| Critical Safety Alert | התראת בטיחות קריטית | ⬜ |
-| Stock Available | זמין במלאי | ⬜ |
-| Out of Stock | אזל מהמלאי | ⬜ |
-| Dosage & Usage | מינון ושימוש | ⬜ |
-| Prescription Conflict | התנגשות מרשם | ⬜ |
-
----
-
-## 6. Edge Case & Error Handling
+## 4. Edge Case & Error Handling
 
 | Scenario | User (ID) | Input Example | Expected Tools | Expected Behavior | Status |
 |----------|-----------|---------------|----------------|-------------------|--------|
 | Empty user input | Any | "" | None | Reject with 400 error or prompt | ⬜ |
 | Very long input (>1000 chars) | Any | Long text | Depends on content | Process normally or truncate gracefully | ⬜ |
-| Rapid successive requests | Any | Multiple fast messages | Multiple tool calls | Handle without crashes or mixing | ⬜ |
+| Rapid successive requests | Any | Multiple fast messages (before responses) | Last message only | Process most recent message without crashes or response mixing | ⬜ |
 | Session ID change | Switch users | Change user in sidebar | None | Reset conversation history | ⬜ |
 | OpenAI API timeout | Any | Any valid input | Any | Graceful error message | ⬜ |
 | OpenAI API rate limit | Any | Any valid input | Any | Retry or inform user politely | ⬜ |

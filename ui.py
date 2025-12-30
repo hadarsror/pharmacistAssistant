@@ -75,6 +75,8 @@ if prompt := st.chat_input("How can I help you with your medication?"):
 
         try:
             with requests.post(url, stream=True) as r:
+                r.raise_for_status()  # Raise exception for HTTP errors (4xx, 5xx)
+                
                 for line in r.iter_lines():
                     if line:
                         decoded_line = line.decode('utf-8')
@@ -107,6 +109,27 @@ if prompt := st.chat_input("How can I help you with your medication?"):
             st.session_state.messages.append(
                 {"role": "assistant", "content": full_response})
 
+        except requests.exceptions.HTTPError as e:
+            status_container.update(label="Request Error", state="error")
+            if e.response.status_code == 400:
+                # Try multiple ways to extract error detail
+                error_detail = 'Bad request'
+                try:
+                    error_data = e.response.json()
+                    error_detail = error_data.get('detail', error_data)
+                except:
+                    try:
+                        error_detail = e.response.text
+                    except:
+                        pass
+                
+                # Provide helpful context for input length errors
+                if "too long" in str(error_detail).lower() or len(prompt) > 1000:
+                    st.error(f"❌ Your message is too long!\n\n**Your message:** {len(prompt)} characters\n**Maximum allowed:** 1000 characters\n\nPlease shorten your message and try again.")
+                else:
+                    st.error(f"❌ {error_detail}")
+            else:
+                st.error(f"❌ Server error ({e.response.status_code}): {e}")
         except Exception as e:
             status_container.update(label="Connection Error", state="error")
-            st.error(f"Error connecting to backend: {e}")
+            st.error(f"❌ Error connecting to backend: {e}")

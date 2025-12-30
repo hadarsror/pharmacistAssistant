@@ -180,6 +180,8 @@ def check_user_status(user_id: str, med_name: str) -> Dict[str, Any]:
         "user_name_hebrew": user.get("name_hebrew", user["name"]),
         "medication": med_name_to_return,  # Return name in the language requested
         "authorized_by_rx": is_authorized,
+        "has_prescription": rx_entry is not None,  # Whether user has a prescription on file
+        "requires_prescription": med.get("requires_rx", True),  # Whether medication needs Rx
         "patient_usage_instructions": rx_entry["instructions"] if rx_entry else "No specific prescription found.",
         "medication_restrictions": med.get("restrictions", "None listed."),
         "allergy_conflict": allergy_conflict,
