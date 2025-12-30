@@ -13,8 +13,8 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 | Test ID | Language | User (ID) | Input | Expected Tools | Expected Outcome | Status |
 |---------|----------|-----------|-------|----------------|------------------|--------|
 | F1-EN-01 | English | Hadar (312456789) | "Can I take Lisinopril?" | get_patient_details (optional), check_user_status, get_medication_info | Authorized, shows prescription details, no allergy | ⬜ |
-| F1-EN-02 | English | Maya (123123123) | "Do you have Ritalin?" | get_patient_details (optional), check_user_status, get_medication_info | **ALLERGY ALERT** - Methylphenidate allergy | ⬜ |
-| F1-EN-03 | English | Bob (058123456) | "Can I take Ibuprofen?" | get_patient_details (optional), check_user_status, get_medication_info | **ALLERGY ALERT** - Ibuprofen allergy | ⬜ |
+| F1-EN-02 | English | Maya (123123123) | "Do you have Ritalin?" | get_patient_details (optional), check_user_status, get_medication_info | **ALLERGY ALERT** - Methylphenidate allergy (with prescription conflict warning) | ⬜ |
+| F1-EN-03 | English | Bob (058123456) | "Can I take Ibuprofen?" | get_patient_details (optional), check_user_status, get_medication_info | **ALLERGY ALERT** - Ibuprofen allergy (with prescription conflict warning) | ⬜ |
 | F1-EN-04 | English | Alice (204567891) | "Do you have Metformin?" | get_patient_details (optional), check_user_status, get_medication_info | Authorized, shows prescription details | ⬜ |
 | F1-EN-05 | English | Dana (300987654) | "Can I get Aspirin?" | get_patient_details (optional), check_user_status, get_medication_info | **ERROR** - Medication not found in database | ⬜ |
 | F1-EN-06 | English | Hadar (312456789) | "Do you have Lisinopril?" (stock_level=0) | get_patient_details (optional), check_user_status, get_medication_info | Authorized but shows "Out of stock" | ⬜ |
@@ -26,6 +26,7 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 - Agent calls check_user_status and get_medication_info for all patient-specific medication queries
 - get_patient_details may be called optionally
 - All allergies detected with CRITICAL SAFETY ALERT
+- Prescription conflicts (allergy + prescription) show special warning
 - Authorized medications show full details
 - No false allergy warnings
 - Out of stock medications clearly indicated
@@ -66,6 +67,8 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 | F3-EN-03 | English | Dana (300987654) | "What medications am I on?" | get_patient_details | Shows "No active prescriptions" gracefully | ⬜ |
 | F3-EN-04 | English | Eren (777888999) | "List my current medications" | get_patient_details | Shows Metformin with stock and details | ⬜ |
 | F3-EN-05 | English | Invalid user (000000000) | "What are my prescriptions?" | get_patient_details | **ERROR** - User not found in database | ⬜ |
+| F3-EN-06 | English | Bob (058123456) | "What are my prescriptions?" | get_patient_details | Shows Ibuprofen prescription with **CRITICAL WARNING** about allergy conflict | ⬜ |
+| F3-EN-07 | English | Maya (123123123) | "Show my medications" | get_patient_details | Shows Ritalin prescription with **CRITICAL WARNING** about allergy conflict | ⬜ |
 | F3-HE-01 | Hebrew | Mikasa (444555666) | "מה המרשמים שלי?" | get_patient_details | Lists Lisinopril (Hebrew) with stock | ⬜ |
 | F3-HE-02 | Hebrew | Levi (111222333) | "הצג לי את ההיסטוריה הרפואית" | get_patient_details | Shows Amoxicillin prescription + medical history (Hebrew) | ⬜ |
 
@@ -73,6 +76,7 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 - Agent retrieves all patient prescriptions using get_patient_details
 - Shows stock availability for medications
 - Includes medical history and known allergies
+- Detects and warns about prescription-allergy conflicts
 - Properly formatted in requested language
 - Gracefully handles user not found error
 
@@ -82,7 +86,7 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 
 | Test ID | User (ID) | Conversation Flow | Expected Tools | Expected Behavior | Status |
 |---------|-----------|-------------------|----------------|-------------------|--------|
-| C1-EN | Maya (123123123) | "Can I take Ritalin?" → "What about Advil?" | (get_patient_details (optional), check_user_status, get_medication_info) → (get_patient_details (optional), check_user_status, get_medication_info) | First shows Ritalin allergy, second shows Advil details with NO Ritalin allergy mention | ⬜ |
+| C1-EN | Maya (123123123) | "Can I take Ritalin?" → "What about Advil?" | (get_patient_details (optional), check_user_status, get_medication_info) → (get_patient_details (optional), check_user_status, get_medication_info) | First shows Ritalin allergy with prescription conflict, second shows Advil details with NO Ritalin mention | ⬜ |
 | C1-HE | Maya (123123123) | "יש ריטלין?" → "ומה לגבי אדוויל?" | (get_patient_details (optional), check_user_status, get_medication_info) → (get_patient_details (optional), check_user_status, get_medication_info) | First Hebrew allergy alert for Ritalin, second Advil details in Hebrew with NO Ritalin mention | ⬜ |
 | C2-EN | Dana (300987654) | "Do you have Ibuprofen?" → "Do I have a prescription for it?" | (get_patient_details (optional), check_user_status, get_medication_info) → no new tools | Second question uses previous data, correctly refers to Ibuprofen | ⬜ |
 | C3-MIX | Hadar (312456789) | "Can I take Amoxicillin?" (EN) → "ומה לגבי ליסינופריל?" (HE) | (get_patient_details (optional), check_user_status, get_medication_info) → (get_patient_details (optional), check_user_status, get_medication_info) | First shows Penicillin allergy (EN), second shows Lisinopril authorized (HE), no context bleeding | ⬜ |
@@ -133,7 +137,8 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 | get_medication_info | name="Ibuprofen" | Returns full medication details (NSAIDs, stock 200) | N/A | ⬜ |
 | get_medication_info | name="Aspirin" | {"error": "Medication not found."} | Graceful error message | ⬜ |
 | check_user_status | user_id="312456789", med_name="Lisinopril" | Returns authorized=True, no allergy, prescription details | N/A | ⬜ |
-| check_user_status | user_id="123123123", med_name="Ritalin" | Returns allergy_conflict="Patient is allergic to Methylphenidate" | N/A | ⬜ |
+| check_user_status | user_id="123123123", med_name="Ritalin" | Returns allergy_conflict="Patient is allergic to Methylphenidate" + has_prescription=True | N/A | ⬜ |
+| check_user_status | user_id="058123456", med_name="Ibuprofen" | Returns allergy_conflict="Patient is allergic to Ibuprofen" + has_prescription=True | N/A | ⬜ |
 | check_user_status | user_id="000000000", med_name="Ibuprofen" | {"error": "Patient ID ... not found."} | Graceful error message | ⬜ |
 | check_user_status | user_id="312456789", med_name="Aspirin" | {"error": "Medication '...' not found."} | Graceful error message | ⬜ |
 | get_alternatives | active_ingredient="Ibuprofen", current_med_name="Advil" | Returns {"alternatives": ["Ibuprofen"]} | N/A | ⬜ |
@@ -168,6 +173,7 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 | L2-04 | Stock Available | זמין במלאי | ⬜ |
 | L2-05 | Out of Stock | אזל מהמלאי | ⬜ |
 | L2-06 | Dosage & Usage | מינון ושימוש | ⬜ |
+| L2-07 | Prescription Conflict | התנגשות מרשם | ⬜ |
 
 ---
 
@@ -181,81 +187,4 @@ This evaluation plan ensures the Pharmacy AI Assistant meets all requirements fo
 | Session ID change mid-conversation | Switch users | Change user in sidebar | None | Reset conversation history appropriately | ⬜ |
 | OpenAI API timeout | Any | Any valid input | Any | Graceful error message, no technical details | ⬜ |
 | OpenAI API rate limit | Any | Any valid input | Any | Retry or inform user politely | ⬜ |
-| Malformed tool arguments | Any | Agent calls tool incorrectly | Tool error | Catch exception, return user-friendly error | ⬜ |
-| User not in database | Invalid user (000000000) | "What are my prescriptions?" | get_patient_details | Error message "User not found" | ⬜ |
-| Medication not in database | Dana (300987654) | "Do you have Aspirin?" | get_patient_details (optional), check_user_status, get_medication_info | Error message "Medication not found" | ⬜ |
-| Out of stock medication | Hadar (312456789) | "Can I take Lisinopril?" (when stock_level=0) | get_patient_details (optional), check_user_status, get_medication_info | Shows authorized but "Out of stock" message | ⬜ |
-| Multiple allergies | User with multiple allergies | "Can I take X?" where X conflicts with multiple allergies | get_patient_details (optional), check_user_status | Shows all relevant allergies | ⬜ |
-| User with no prescriptions | Dana (300987654) | "What are my prescriptions?" | get_patient_details | Gracefully states no active prescriptions | ⬜ |
-| No alternatives available | Maya (123123123) | "Alternative to Ritalin?" | get_patient_details (optional), get_alternatives | Helpfully explains no alternatives exist | ⬜ |
-| Alternative also causes allergy | Bob (058123456) | "Alternative to Ibuprofen" | get_patient_details (optional), get_alternatives, check_user_status, get_medication_info | Shows alternative but with ALLERGY ALERT | ⬜ |
-| All alternatives out of stock | Dana (300987654) | "Alternative to Advil" (when all alternatives stock=0) | get_patient_details (optional), get_alternatives, check_user_status, get_medication_info | Shows alternatives but all out of stock | ⬜ |
-
----
-
-## 7. Performance & Latency Testing
-
-| Metric | Target | Measurement Method | Status |
-|--------|--------|-------------------|--------|
-| First token latency | < 2 seconds | Time from message send to first content chunk | ⬜ |
-| Single tool call latency | < 3 seconds | Time from tool call to result received | ⬜ |
-| Multi-tool call latency | < 5 seconds | Time for 2+ tools (e.g., check_user_status + get_medication_info) | ⬜ |
-| End-to-end response | < 8 seconds | Complete conversation turn including all tools | ⬜ |
-
----
-
-## 8. Production Readiness Checklist
-
-| Requirement | Status |
-|-------------|--------|
-| Docker builds successfully | ⬜ |
-| Environment variables documented | ⬜ |
-| Logging implemented | ⬜ |
-| Error handling comprehensive | ⬜ |
-| README complete (manually written) | ⬜ |
-| Multi-step flows documented | ⬜ |
-| Screenshots captured (2-3) | ⬜ |
-| Code commented and typed | ⬜ |
-| Tools documented with schemas | ⬜ |
-
----
-
-## Execution Instructions
-
-1. **Setup:** Deploy agent using Docker or run locally
-2. **Test Execution:** Run each test case systematically
-3. **Tool Verification:** Check UI "Using tool:" messages match expected tools (get_patient_details is optional)
-4. **Documentation:** Record results in Status column (✅ Pass, ❌ Fail, ⚠️ Partial)
-5. **Issue Tracking:** Document failures with reproduction steps and screenshots
-6. **Regression:** Retest failed cases after fixes
-7. **Sign-off:** All critical tests must pass before production deployment
-
----
-
-## Success Criteria
-
-- ✅ 100% of Flow tests pass in both languages
-- ✅ 100% of Policy tests pass (no medical advice given)
-- ✅ 100% of Tool tests pass (including error handling)
-- ✅ 100% of Context Switching tests pass (critical for correctness)
-- ✅ 100% of Edge cases handled gracefully
-- ✅ All performance targets met
-- ✅ Production readiness checklist complete
-
----
-
-## User Reference Guide
-
-| User ID | Name | Allergies | Prescriptions | Best For Testing |
-|---------|------|-----------|---------------|------------------|
-| 312456789 | Hadar | Penicillin | Lisinopril | Authorized meds, Penicillin allergy |
-| 058123456 | Bob Levy | Ibuprofen | None | Ibuprofen/NSAIDs allergy |
-| 123123123 | Maya Avni | Methylphenidate | None | Ritalin/Stimulants allergy |
-| 204567891 | Alice Cohen | None | Metformin | Authorized meds, no allergies |
-| 300987654 | Dana Silver | None | None | Clean slate, no restrictions |
-| 111222333 | Levi Ackermann | None | Amoxicillin | Authorized antibiotics |
-| 444555666 | Mikasa Arlert | Penicillin | Lisinopril | Penicillin allergy + authorized med |
-| 777888999 | Eren Yeager | None | Metformin | Authorized diabetes med |
-| 121212121 | Armin Arlert | Ibuprofen | None | Ibuprofen/NSAIDs allergy |
-| 989898989 | Jean Kirschtein | None | None | Clean slate, no restrictions |
-| 000000000 | Invalid User | N/A | N/A | Testing user not found errors |
+| Malformed tool

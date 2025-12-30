@@ -16,14 +16,18 @@ USERS_DB = {
         "id": "058123456",
         "name": "Bob Levy",
         "allergies": ["Ibuprofen"],
-        "prescriptions": [],  # Fixed: Removed Ibuprofen prescription conflict
+        "prescriptions": [
+            {"name": "Ibuprofen", "instructions": "Take 200mg as needed for pain."}
+        ],  # CONFLICT: Has both allergy AND prescription
         "history": "Chronic headaches."
     },
     "123123123": {
         "id": "123123123",
         "name": "Maya Avni",
         "allergies": ["Methylphenidate"],
-        "prescriptions": [],  # Fixed: Removed Ritalin prescription conflict
+        "prescriptions": [
+            {"name": "Ritalin", "instructions": "Take 10mg twice daily for ADHD."}
+        ],  # CONFLICT: Has both allergy AND prescription (Ritalin contains Methylphenidate)
         "history": "ADHD."
     },
     "204567891": {
