@@ -44,6 +44,11 @@ if "messages" not in st.session_state:
 # --- DISPLAY HISTORY ---
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
+        # Show tool calls if they exist
+        if message.get("tools"):
+            for tool in message["tools"]:
+                st.caption(tool)
+        
         # Calculate direction for THIS specific message
         msg_dir = get_direction(message["content"])
         msg_align = get_alignment(msg_dir)
@@ -67,6 +72,7 @@ if prompt := st.chat_input("How can I help you with your medication?"):
     with st.chat_message("assistant"):
         response_placeholder = st.empty()
         full_response = ""
+        tool_calls_for_message = []  # Track tool calls for this message
 
         # Status box (created once)
         status_container = st.status("Processing request...", expanded=True)
@@ -84,8 +90,9 @@ if prompt := st.chat_input("How can I help you with your medication?"):
                             data = json.loads(decoded_line[6:])
 
                             if "tool" in data:
-                                status_container.write(
-                                    f"Using tool: {data['tool']}")
+                                tool_info = f"🔧 Using tool: {data['tool']}"
+                                tool_calls_for_message.append(tool_info)
+                                status_container.write(tool_info)
 
                             if "content" in data:
                                 status_container.update(
@@ -107,7 +114,7 @@ if prompt := st.chat_input("How can I help you with your medication?"):
                 unsafe_allow_html=True
             )
             st.session_state.messages.append(
-                {"role": "assistant", "content": full_response})
+                {"role": "assistant", "content": full_response, "tools": tool_calls_for_message})
 
         except requests.exceptions.HTTPError as e:
             status_container.update(label="Request Error", state="error")

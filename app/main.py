@@ -67,36 +67,6 @@ TOOL_MAP = {
 chat_sessions: Dict[str, List[Dict[str, Any]]] = {}
 
 
-def ensure_disclaimer(response: str, session_id: str) -> str:
-    """
-    Ensure all responses contain appropriate disclaimer.
-    
-    Args:
-        response: The agent's response text
-        session_id: Session ID to determine language context
-        
-    Returns:
-        Response with disclaimer appended if missing
-    """
-    disclaimer_en = "This information is for reference only. For medical advice, please consult your doctor or pharmacist."
-    disclaimer_he = "מידע זה למטרות התייחסות בלבד. לייעוץ רפואי, אנא היוועצו עם הרופא או הרוקח שלכם."
-    
-    # Check if response is in Hebrew (simple heuristic: contains Hebrew characters)
-    is_hebrew = bool(re.search(r'[\u0590-\u05FF]', response))
-    
-    disclaimer = disclaimer_he if is_hebrew else disclaimer_en
-    
-    # Check for core disclaimer phrase (not exact match to avoid duplicates)
-    core_phrase_en = "This information is for reference only"
-    core_phrase_he = "מידע זה למטרות התייחסות בלבד"
-    
-    has_disclaimer = core_phrase_en in response or core_phrase_he in response
-    
-    # Only add if not already present
-    if not has_disclaimer and response.strip():
-        return response + "\n\n" + disclaimer
-    return response
-
 
 def cleanup_old_sessions():
     """
@@ -215,14 +185,8 @@ async def agent_loop(messages: List[Dict[str, Any]], session_id: str = "default"
             async for next_chunk in agent_loop(messages, session_id):
                 yield next_chunk
         else:
-            # No tool calls, final response - ENFORCE DISCLAIMER
-            final_content = ensure_disclaimer(current_content, session_id)
-            messages.append({"role": "assistant", "content": final_content})
-            
-            # If disclaimer was added, yield the additional content
-            if len(final_content) > len(current_content):
-                disclaimer_addition = final_content[len(current_content):]
-                yield f"data: {json.dumps({'content': disclaimer_addition})}\n\n"
+            # No tool calls, final response
+            messages.append({"role": "assistant", "content": current_content})
 
     except Exception as e:
         logger.error(f"Error in agent loop: {str(e)}", exc_info=True)
