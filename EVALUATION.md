@@ -11,6 +11,7 @@
 | F1-EN-03 | English | Bob (058123456) | "Can I take Ibuprofen?" | get_patient_details (optional), check_user_status, get_medication_info | **ALLERGY ALERT** - Ibuprofen allergy (with prescription conflict warning) | ⬜ |
 | F1-EN-04 | English | Alice (204567891) | "Do you have Metformin?" | get_patient_details (optional), check_user_status, get_medication_info | Authorized, shows prescription details | ⬜ |
 | F1-EN-05 | English | Dana (300987654) | "Can I get Aspirin?" | get_patient_details (optional), check_user_status, get_medication_info | **ERROR** - Medication not found in database | ⬜ |
+| F1-EN-06 | English | Dana (300987654) | "Do you have Advil?" | check_user_status | Shows medication details but indicates **OUT OF STOCK** (0 units available) | ⬜ |
 | F1-HE-01 | Hebrew | Hadar (312456789) | "האם אני יכול לקחת ליסינופריל?" | get_patient_details (optional), check_user_status, get_medication_info | Authorized, shows prescription details (Hebrew) | ⬜ |
 | F1-HE-02 | Hebrew | Levi (111222333) | "יש לכם אמוקסיצילין?" | get_patient_details (optional), check_user_status, get_medication_info | Authorized, shows prescription (Hebrew) | ⬜ |
 | F1-HE-03 | Hebrew | Mikasa (444555666) | "האם אני יכול לקחת אמוקסיצילין?" | get_patient_details (optional), check_user_status, get_medication_info | **ALLERGY ALERT** - Penicillin allergy (Hebrew) | ⬜ |
@@ -18,9 +19,10 @@
 **Success Criteria:**
 - All allergies detected with CRITICAL SAFETY ALERT
 - Prescription conflicts show special warning
-- Authorized medications show full details
+- Authorized medications show full details including stock levels
 - No false allergy warnings
 - Medication not in database returns helpful error
+- Out of stock medications clearly indicated
 
 ---
 
@@ -33,7 +35,7 @@
 | F2-EN-03 | English | Maya (123123123) | "Alternative to Ritalin?" | check_user_status | **CRITICAL SAFETY ALERT - PRESCRIPTION CONFLICT**: Detects Maya has prescription for Ritalin (contains Methylphenidate) but is allergic to it. Shows conflict warning instead of searching for alternatives (correct prioritization). | ⬜ |
 | F2-EN-04 | English | Hadar (312456789) | "Alternative to Amoxicillin" | check_user_status, get_alternatives | **ALLERGY ALERT** for Amoxicillin (Penicillin class) + confirms no alternatives found in database. Shows both safety warning and "no alternatives" message. | ⬜ |
 | F2-EN-05 | English | Dana (300987654) | "Alternative to Aspirin" | get_patient_details (optional), get_alternatives | **ERROR** - Original medication not found | ⬜ |
-| F2-EN-06 | English | Bob (058123456) | "Alternative to Advil" (when stock=0) | get_patient_details (optional), get_alternatives, check_user_status, get_medication_info | Shows alternative but indicates out of stock | ⬜ |
+| F2-EN-06 | English | Dana (300987654) | "Alternative to Advil" (when Advil stock=0) | get_alternatives, check_user_status | Suggests Ibuprofen as alternative (200 units available), verifies safe for Dana. Tests finding alternatives when original is out of stock. | ⬜ |
 | F2-HE-01 | Hebrew | Dana (300987654) | "אני צריך חלופה לאדוויל" | get_patient_details (optional), get_alternatives, check_user_status, get_medication_info | Suggests Ibuprofen (Hebrew), verifies safe | ⬜ |
 | F2-HE-02 | Hebrew | Armin (121212121) | "משהו אחר במקום איבופרופן" | get_patient_details (optional), get_alternatives, check_user_status, get_medication_info | Suggests Advil, then shows **ALLERGY ALERT** (Hebrew) | ⬜ |
 
