@@ -28,7 +28,7 @@
 
 | Test ID | Language | User (ID) | Input | Expected Tools | Expected Outcome | Status |
 |---------|----------|-----------|-------|----------------|------------------|--------|
-| F2-EN-01 | English | Bob (058123456) | "I need alternative to Ibuprofen" | get_patient_details (optional), get_alternatives, check_user_status, get_medication_info | Suggests Advil, then shows **ALLERGY ALERT** (both have Ibuprofen) | ⬜ |
+| F2-EN-01 | English | Bob (058123456) | "I need alternative to Ibuprofen" | check_user_status | **CRITICAL SAFETY ALERT - PRESCRIPTION CONFLICT**: Detects Bob has prescription for Advil (contains Ibuprofen) but is allergic to it. Prioritizes safety warning over suggesting alternatives. | ⬜ |
 | F2-EN-02 | English | Dana (300987654) | "Something else instead of Ibuprofen" | get_patient_details (optional), get_alternatives, check_user_status, get_medication_info | Suggests Advil, verifies safe for Dana | ⬜ |
 | F2-EN-03 | English | Maya (123123123) | "Alternative to Ritalin?" | get_patient_details (optional), get_alternatives | No alternatives found (unique active ingredient) | ⬜ |
 | F2-EN-04 | English | Hadar (312456789) | "Alternative to Amoxicillin" | get_patient_details (optional), get_alternatives | No alternatives or error (Penicillin class unique in DB) | ⬜ |
