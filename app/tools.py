@@ -70,7 +70,8 @@ def get_medication_info(name: str) -> Dict[str, Any]:
     name = name.strip()
     logger.info(f"Fetching medication info for: {name}")
 
-    # Try English name (case-insensitive via capitalization)
+    # Try English name (case-insensitive matching)
+    # capitalize() handles all caps ("IBUPROFEN" -> "Ibuprofen") and mixed case ("iBuProFen" -> "Ibuprofen")
     name_capitalized = name.capitalize()
     med = MEDICATIONS_DB.get(name_capitalized)
     
@@ -179,6 +180,7 @@ def check_user_status(user_id: str, med_name: str) -> Dict[str, Any]:
         "user_name": user["name"],
         "user_name_hebrew": user.get("name_hebrew", user["name"]),
         "medication": med_name_to_return,  # Return name in the language requested
+        "medication_name_hebrew": med.get("name_hebrew", med_key),  # Always include Hebrew name
         "authorized_by_rx": is_authorized,
         "has_prescription": rx_entry is not None,  # Whether user has a prescription on file
         "requires_prescription": med.get("requires_rx", True),  # Whether medication needs Rx

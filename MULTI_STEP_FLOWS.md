@@ -6,7 +6,7 @@
 
 **Steps:**
 1. User asks: "Can I take [medication]?"
-2. Agent calls `check_user_status(user_id, medication_name)`
+2. Agent calls `check_user_status(user_id, medication_name)` (may optionally call `get_patient_details` first)
 3. Tool checks if patient has prescription for this medication
 4. Tool checks if patient is allergic to medication's active ingredients or drug class
 5. Agent responds:

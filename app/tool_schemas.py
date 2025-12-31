@@ -66,7 +66,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "get_alternatives",
-            "description": "Find alternative medications with the same active ingredient. Use when patient cannot take current medication due to allergies, stock issues, or preference. After getting alternatives, you should call check_user_status on the suggested alternative.",
+            "description": "Find alternative medications with the same active ingredient. Use when patient cannot take current medication due to allergies, stock issues, or preference. IMPORTANT: After getting alternatives, call check_user_status for EACH suggested alternative to verify patient safety before recommending it.",
             "parameters": {
                 "type": "object",
                 "properties": {
