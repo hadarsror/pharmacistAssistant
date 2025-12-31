@@ -118,8 +118,8 @@
 
 | Scenario | User (ID) | Input Example | Expected Tools | Expected Behavior |
 |----------|-----------|---------------|----------------|-------------------|
-| Empty user input | Any | "" | None | Reject with 400 error |
-| Very long input (>1000 chars) | Any | Long text | None | Reject with 400 error "Input too long (max 1000 characters)" |
+| Empty user input | Any | "" (empty string or whitespace only) | None | Reject with 400 error "user_input cannot be empty" |
+| Very long input (>1000 chars) | Any | Long text (>1000 characters) | None | Reject with 400 error "Input too long (max 1000 characters)" |
 | Rapid successive requests | Any | Multiple fast messages (before responses) | Last message only | Process most recent message without crashes or response mixing |
 | Typo correction | Dana (300987654) | "Can I have avdil?" → "yes" | check_user_status, get_medication_info | Asks "Did you mean Advil?" → shows Advil |
 
